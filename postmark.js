@@ -81,13 +81,6 @@ Postmark.send =
   async function (pmMsg) {
     let stream = Postmark.streams[pmMsg.stream] || Postmark._defaultStream;
 
-    /*
-    replyTo: `${process.env.APP_COMPANY_REPLY_TO}`,
-    to: email,
-    subject: `Hello from ${process.env.APP_COMPANY_SHORT_NAME}`,
-    text:
-    */
-
     let msg = {
       MessageSteram: stream.id,
       //Tag: "Invitation",
