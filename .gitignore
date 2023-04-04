@@ -1,3 +1,11 @@
+# config & data
+/emails/
+.env
+.env.*
+
+# vim swap
+.*.sw*
+
 # Logs
 logs
 *.log
