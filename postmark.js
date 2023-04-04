@@ -92,6 +92,7 @@ Postmark.send =
       MessageSteram: stream.id,
       //Tag: "Invitation",
       From: stream.from,
+      ReplyTo: pmMsg.replyTo,
       To: pmMsg.to,
       Cc: pmMsg.cc,
       Bcc: pmMsg.bcc,
