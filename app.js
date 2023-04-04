@@ -48,8 +48,9 @@ async function inviteSaver(req, res) {
   // TODO Eta+Mjml
   let response = await Postmark.send({
     stream: "activity",
-    replyTo: `${process.env.APP_COMPANY_REPLY_TO}`,
+    replyTo: process.env.APP_COMPANY_REPLY_TO,
     to: email,
+    bcc: process.env.APP_COMPANY_BCC,
     subject: `Hello from ${process.env.APP_COMPANY_SHORT_NAME}`,
     text: [
       `Thanks for your interest in ${process.env.APP_COMPANY_PRODUCT}.`,
