@@ -1,0 +1,2 @@
+# funnel-api
+Collect emails
