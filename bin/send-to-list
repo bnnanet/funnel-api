@@ -1,0 +1,117 @@
+#!/bin/env bun
+"use strict";
+
+require("dotenv").config({ path: ".env" });
+require("dotenv").config({ path: ".env.secret" });
+
+let Fs = require("node:fs/promises");
+
+let Postmark = require("../postmark.js");
+
+function showHelp() {
+  console.error(``);
+  console.error(`USAGE`);
+  console.error(`        send-to-list <list-dir> <subject+body-txt>`);
+  console.error(``);
+  console.error(`EXAMPLE`);
+  console.error(`        send-to-list ./test-emails ./test-message.txt`);
+  console.error(``);
+}
+
+async function main() {
+  let emailsDir = process.argv[2];
+  let emailBody = process.argv[3];
+  let canSend = emailsDir && emailBody;
+  if (!canSend) {
+    showHelp();
+
+    process.exit(1);
+  }
+
+  let names = await Fs.readdir(emailsDir);
+  let text = await Fs.readFile(emailBody, "utf8");
+  text = text.trim();
+
+  let emails = namesToAddresses(names);
+  let [subject, body] = textToSubjectBody(text);
+
+  let missingContent = !subject || !body;
+  if (missingContent) {
+    throw new Error(
+      "message text file should have subject as the first line followed by at least one line of body",
+    );
+  }
+
+  let toList = emails.join(", ");
+  console.info();
+  console.info(`To: ${toList}`);
+  console.info(`Subject: ${subject}`);
+  console.info();
+  console.info(body);
+  console.info();
+  sendMessage({ to: emails, subject: subject, text: body });
+}
+
+/**
+ * @param {String} text
+ * @returns [String, String]
+ */
+function textToSubjectBody(text) {
+  let lines = text.split("\n");
+  let subject = lines.shift() || "";
+  let body = lines.join("\n").trim();
+
+  return [subject, body];
+}
+
+/**
+ * @param {Object} opts
+ * @param {Array<String>} opts.to
+ * @param {String} opts.subject
+ * @param {String} opts.text
+ */
+async function sendMessage({ to, subject, text }) {
+  // TODO Eta+Mjml
+  let response = await Postmark.send({
+    stream: "promo",
+    replyTo: process.env.APP_COMPANY_REPLY_TO || "",
+    to: to.join(", "),
+    bcc: process.env.APP_COMPANY_BCC,
+    subject: subject,
+    text: text,
+  });
+
+  console.info(`${response.status} ${response.statusText}`);
+  if (!response.ok) {
+    console.error(response.body);
+    throw new Error("unexpected response");
+  }
+}
+
+/**
+ * @param {Array<String>} names
+ * @returns Array<String>
+ */
+function namesToAddresses(names) {
+  let emails = [];
+
+  for (let name of names) {
+    name = name.toLowerCase().trim();
+
+    let isTmp = /^\.|~$/.test(name);
+    let isAddr = /@/.test(name);
+    let skip = isTmp || !isAddr;
+    if (skip) {
+      continue;
+    }
+
+    emails.push(name);
+  }
+
+  return emails;
+}
+
+main().catch(function (err) {
+  console.error(err.stack || err);
+  process.exit(1);
+});
