@@ -33,6 +33,10 @@ async function main() {
   text = text.trim();
 
   let emails = namesToAddresses(names);
+  if (process.env.APP_COMPANY_BCC) {
+    emails.push(process.env.APP_COMPANY_BCC);
+  }
+
   let [subject, body] = textToSubjectBody(text);
 
   let missingContent = !subject || !body;
@@ -49,7 +53,7 @@ async function main() {
   console.info();
   console.info(body);
   console.info();
-  sendMessage({ to: emails, subject: subject, text: body });
+  sendMessage({ bcc: emails, subject: subject, text: body });
 }
 
 /**
@@ -66,17 +70,18 @@ function textToSubjectBody(text) {
 
 /**
  * @param {Object} opts
- * @param {Array<String>} opts.to
+ * @param {Array<String>} opts.bcc
  * @param {String} opts.subject
  * @param {String} opts.text
  */
-async function sendMessage({ to, subject, text }) {
+async function sendMessage({ bcc, subject, text }) {
   // TODO Eta+Mjml
   let response = await Postmark.send({
     stream: "promo",
     replyTo: process.env.APP_COMPANY_REPLY_TO || "",
-    to: to.join(", "),
-    bcc: process.env.APP_COMPANY_BCC,
+    to: "",
+    cc: "",
+    bcc: bcc.join(", "),
     subject: subject,
     text: text,
   });
